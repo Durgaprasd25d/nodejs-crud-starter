@@ -28,29 +28,69 @@ const pickFields = (body = {}) => {
 };
 
 
-const createStudent = (req,res)=>{
+const createStudent = async (req, res) => {
+  try {
     const studentData = pickFields(req.body);
-    console.log(studentData)
 
-//add condition and validation
-
-// const studentExists = Student.findOne({ email: studentData.email });
-//     if (studentExists) {
-//         return res.status(409).json({ success: false, message: "Email already exists" });
-//     }
-
-    // if(studentData.age < 6 || studentData.age > 60){
-    //     return res.status(400).json({ success: false, message: "Age must be between 6 and 60" });
-    // }
-
-    if(!studentData.name || !studentData.email || !studentData.course || !studentData.age){
-        return res.status(400).json({ success: false, message: "Name, Email and Course are required fields" });
+    if (!studentData.name || !studentData.email || !studentData.course || !studentData.age) {
+      return res.status(400).json({
+        success: false,
+        message: "Name, email, age, and course are required fields",
+      });
     }
 
-    const student = new Student(studentData);
-    res.status(201).json({ success: true, message: "Student created", data: student });
+    const student = await Student.create(studentData);
+    return res.status(201).json({ success: true, message: "Student created", data: student });
+  } catch (error) {
+    return handleError(res, error);
+  }
+};
+
+
+const getAllStudents = async (req, res) => {
+    try {
+        const students = await Student.find();
+        res.status(200).json({ success: true, data: students });
+    } catch (error) {
+        handleError(res, error);
+    }
 }
 
+const getStudentByID =  async (req,res)=>{
+  try {
+    const student = await Student.findById(req.params.id);
+    if (!student) {
+      return res.status(404).json({ success: false, message: "Student not found" });
+    }
+    res.status(200).json({ success: true, data: student });
+  } catch (error) {
+    handleError(res, error);
+  }
+}
 
+const updateStudent = async (req, res) => {
+  try {
+    const studentData = pickFields(req.body);
+    const student = await Student.findByIdAndUpdate(req.params.id, studentData, { new: true });
+    if (!student) {
+      return res.status(404).json({ success: false, message: "Student not found" });
+    }
+    res.status(200).json({ success: true, data: student });
+  } catch (error) {
+    handleError(res, error);
+  }
+};
 
-export { createStudent };
+const deleteStudent = async(req,res)=>{
+  try{
+    const student = await Student.findByIdAndDelete(req.params.id);
+    if(!student){
+      return res.status(404).json({success:false,message:"Student not found"});
+    }
+    res.status(200).json({success:true,message:"Student deleted successfully"});    
+  }catch(error){
+    handleError(res,error);
+  }
+}
+
+export { createStudent, getAllStudents, getStudentByID, updateStudent, deleteStudent };
